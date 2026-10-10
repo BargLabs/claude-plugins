@@ -12,6 +12,12 @@
       "source": "./plugins/dunstan",
       "description": "Checks a coding agent's declared handback against the pull request's own GitHub record before it says done.",
       "category": "development"
+    },
+    {
+      "name": "cejel",
+      "source": "./plugins/cejel",
+      "description": "Scores a repository's engineering-trust signals offline and returns a certificate with cited evidence.",
+      "category": "development"
     }
   ]
 }
