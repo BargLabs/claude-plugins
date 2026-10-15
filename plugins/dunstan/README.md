@@ -26,16 +26,37 @@ In Claude Code:
 /plugin install dunstan@barglabs
 ```
 
-The MCP server runs locally with `npx -y dunstan@0.1.11 mcp`, so Node.js 22 or later must be on your path.
+The MCP server runs locally with `npx -y dunstan@0.1.12 mcp`, so Node.js 22 or later must be on your path.
 
 ## What it runs, reads and sends
 
-The plugin starts the MCP server with `npx -y dunstan@0.1.11 mcp`, which downloads the `dunstan`
+The plugin starts the MCP server with `npx -y dunstan@0.1.12 mcp`, which downloads the `dunstan`
 package at that exact version from the npm registry. The package is one self-contained file with no
 dependencies. The server runs on your machine and reads GitHub's API directly from it: the pull
 request, its files, commits, check runs, workflow runs and artifacts, deployments, and the issues the
 block references. Every request is a read. Nothing is written to GitHub or the repository, and nothing
 is sent to Barg Labs.
+
+## Changes in 0.1.12
+
+Two fixes from a correctness review of the checker (spec 0.1.8).
+
+- **A JUnit artifact from an earlier attempt.** GitHub lists a run's artifacts for the whole run
+  and its jobs at their latest attempt. A test count is now read from an artifact only if it was
+  created while the named job's latest attempt ran, between that job's start and its completion.
+  Otherwise, or while that job is still running, the count is `unverifiable`
+  (`source_unreadable:artifact`) and the artifact is not downloaded. In 0.1.11, after a full re-run
+  whose test job failed before uploading, an artifact from the first attempt, if GitHub still listed
+  it, could be counted as the latest attempt's. A job that "re-run failed jobs" did not re-run keeps
+  its earlier attempt, and its artifact is read as before.
+- **Check runs at another commit.** Check runs are read at the block's `headCommit`. When that is not
+  the pull request's head, every `checks` claim is now `unverifiable` (`check_runs_not_at_head`),
+  beside the head claim's `head_mismatch`. In 0.1.11 they were counted as if they were the head's.
+
+The verdict changes only for a test count whose artifact the job's latest attempt did not upload,
+which was a pass or a fail and is now `unverifiable`. A `checks` claim changes only where the head
+claim already fails, so the overall verdict stays `fail`. Every other claim is unchanged, and no
+token permission is added.
 
 ## Changes in 0.1.11
 
