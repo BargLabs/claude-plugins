@@ -26,16 +26,38 @@ In Claude Code:
 /plugin install dunstan@barglabs
 ```
 
-The MCP server runs locally with `npx -y dunstan@0.1.10 mcp`, so Node.js 22 or later must be on your path.
+The MCP server runs locally with `npx -y dunstan@0.1.11 mcp`, so Node.js 22 or later must be on your path.
 
 ## What it runs, reads and sends
 
-The plugin starts the MCP server with `npx -y dunstan@0.1.10 mcp`, which downloads the `dunstan`
+The plugin starts the MCP server with `npx -y dunstan@0.1.11 mcp`, which downloads the `dunstan`
 package at that exact version from the npm registry. The package is one self-contained file with no
 dependencies. The server runs on your machine and reads GitHub's API directly from it: the pull
 request, its files, commits, check runs, workflow runs and artifacts, deployments, and the issues the
 block references. Every request is a read. Nothing is written to GitHub or the repository, and nothing
 is sent to Barg Labs.
+
+## Changes in 0.1.11
+
+Three fixes from a security review of the checker (spec 0.1.7).
+
+- **Check runs.** A run the checker excludes, such as the Dunstan Action's own `dunstan` run, now
+  hides only earlier runs of its own identity: the same name and workflow path, or, for a run of no
+  workflow, the same name and app, unless that app is `github-actions`, which every workflow in a
+  repository creates runs as. In 0.1.10 it hid every earlier run of its name, so a failed job named
+  `dunstan` in another workflow was not counted, and `checks.total`, `checks.allSucceeded` and
+  `checks.noneFailed` could pass. That job is now counted, and the claims fail.
+- **A pull request that moves while it is checked.** The pull request is read again after the
+  evidence. If its head, base, state or file count changed, the check runs once more from a fresh
+  read; if it moves again, no record is written and the check fails with `pull_request_moved`. A
+  record never pairs one head with evidence read at another.
+- **Response size.** Every answer from GitHub is read against a byte budget (72 MiB for an artifact
+  archive, 48 MiB for anything else) and cancelled past it, never held whole first. An answer over
+  its budget is recorded as unreadable, so a claim that needs it is `unverifiable`.
+
+Only a `checks` claim can get a different verdict from 0.1.10 against the same evidence, and only
+when an excluded run shares its name with a run of another workflow or app, or with a
+`github-actions` run of no workflow. Every other claim is unchanged.
 
 ## Changes in 0.1.10
 
