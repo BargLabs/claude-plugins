@@ -17,7 +17,7 @@ In Claude Code:
 /plugin install cejel@barglabs
 ```
 
-The MCP server runs locally with `npx -y @cejel/cejel@0.6.3 mcp`, so Node.js 18 or later must be on your path.
+The MCP server runs locally with `npx -y @cejel/cejel@0.6.8 mcp`, so Node.js 18 or later must be on your path.
 
 ## What the plugin contains
 
@@ -49,6 +49,18 @@ The MCP server runs locally with `npx -y @cejel/cejel@0.6.3 mcp`, so Node.js 18 
   criteria they come from."
 - "Run Cejel on https://github.com/BargLabs/cejel and save its trust badge to
   ./cejel-badge.svg."
+
+## Changes since 0.6.3
+
+0.6.4 to 0.6.8 include these security and robustness fixes (full notes in the
+[Cejel changelog](https://github.com/BargLabs/cejel/blob/main/CHANGELOG.md)):
+
+- **0.6.8:** a certificate could print a credential taken from a CI command (#553); some
+  repository lines could stall a scan.
+- **0.6.7:** a scanned checkout could redirect where a scan writes its output (#508).
+- **0.6.6:** a repository could stall a scan with a regular expression or a workspace glob (#502).
+
+The MCP server's tool is unchanged (`scan`).
 
 ## Known issues
 

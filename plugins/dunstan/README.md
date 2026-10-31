@@ -26,16 +26,23 @@ In Claude Code:
 /plugin install dunstan@barglabs
 ```
 
-The MCP server runs locally with `npx -y dunstan@0.1.12 mcp`, so Node.js 22 or later must be on your path.
+The MCP server runs locally with `npx -y dunstan@0.1.13 mcp`, so Node.js 22 or later must be on your path.
 
 ## What it runs, reads and sends
 
-The plugin starts the MCP server with `npx -y dunstan@0.1.12 mcp`, which downloads the `dunstan`
+The plugin starts the MCP server with `npx -y dunstan@0.1.13 mcp`, which downloads the `dunstan`
 package at that exact version from the npm registry. The package is one self-contained file with no
 dependencies. The server runs on your machine and reads GitHub's API directly from it: the pull
 request, its files, commits, check runs, workflow runs and artifacts, deployments, and the issues the
 block references. Every request is a read. Nothing is written to GitHub or the repository, and nothing
 is sent to Barg Labs.
+
+## Changes in 0.1.13
+
+The GitHub Action is renamed Dunstan Handback Check, with a shorter description, for the GitHub
+Marketplace. The draft advisory now identifies a test by its (classname, name) pair and reports two
+entries with one identity as `duplicate_record_item`. Advisories never change the verdict; inputs,
+outputs, the check run, the MCP tools and spec 0.1.8 are unchanged.
 
 ## Changes in 0.1.12
 
