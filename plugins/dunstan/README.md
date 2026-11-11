@@ -7,8 +7,11 @@ deployments. Dunstan compares each claim with what GitHub records and returns `p
 `unverifiable`, with a claims table and a record that anyone can re-check offline. No model decides
 the verdict.
 
-This plugin adds two MCP tools and one skill:
+This plugin adds three MCP tools and one skill:
 
+- `dunstan_template_handback` generates the block from the local git checkout (`headCommit` and
+  `filesChanged`), and with `tests.from: "ci"` declares the test counts CI published, read as the
+  check reads them. It is `dunstan template` for an agent with no shell, and writes nothing.
 - `dunstan_suggest_declarations` lists sentences in the report's prose that look like claims the block
   does not declare. It reads nothing, writes nothing and never gives a verdict.
 - `dunstan_check_handback` checks the block against the pull request's record on GitHub and returns
@@ -16,6 +19,9 @@ This plugin adds two MCP tools and one skill:
   never over an existing file.
 - The `dunstan-check` skill tells Claude to declare, suggest, check and report the verdict exactly as
   returned. `unverifiable` means the record could not settle a claim, not that the claim is false.
+
+Dunstan checks the claims a handback declares against the record. It does not check that the
+handback covers what the issue asked for: an accurate report of the wrong work passes.
 
 ## Install
 
@@ -26,16 +32,27 @@ In Claude Code:
 /plugin install dunstan@barglabs
 ```
 
-The MCP server runs locally with `npx -y dunstan@0.1.20 mcp`, so Node.js 22 or later must be on your path.
+The MCP server runs locally with `npx -y dunstan@0.1.21 mcp`, so Node.js 22 or later must be on your path.
 
 ## What it runs, reads and sends
 
-The plugin starts the MCP server with `npx -y dunstan@0.1.20 mcp`, which downloads the `dunstan`
+The plugin starts the MCP server with `npx -y dunstan@0.1.21 mcp`, which downloads the `dunstan`
 package at that exact version from the npm registry. The package is one self-contained file with no
 dependencies. The server runs on your machine and reads GitHub's API directly from it: the pull
 request, its files, commits, check runs, workflow runs and artifacts, deployments, and the issues the
-block references. Every request is a read. Nothing is written to GitHub or the repository, and nothing
-is sent to Barg Labs.
+block references. For a GitLab merge request it reads the same evidence from the GitLab host the
+check names, with the optional GitLab token, which it never sends to GitHub; nor the GitHub token to
+GitLab. Every request is a read. Nothing is written to either forge or the repository, and nothing is
+sent to Barg Labs.
+
+## Changes in 0.1.21
+
+- **The plugin asks for an optional GitLab token.** Beside the GitHub token, Claude Code now asks
+  for `gitlab_token`: a GitLab access token with the `read_api` scope only, kept in your system's
+  secure credential store and passed to the server as `GITLAB_TOKEN`. Dunstan sends it only to the
+  GitLab host a check names, and never sends either token to the other forge. Without it a GitLab
+  check reads anonymously, and a tests claim on GitLab stays unverifiable, because GitLab's
+  anonymous project read leaves out the CI configuration file. Nothing else in the checker changes.
 
 ## Changes in 0.1.20
 
@@ -56,10 +73,11 @@ is sent to Barg Labs.
 
 ## Changes in 0.1.19
 
-- **Ids up to 16 digits.** `--pr`, `--mr`, `--exclude-check-run` and `--exclude-gitlab-job` accept
-  any positive integer up to 9007199254740991 (JavaScript's largest safe integer). 0.1.18 refused
-  anything over ten digits, so a GitLab job id (eleven digits today) could not be excluded and the
-  GitLab CI component failed its own job. Leading zeros, signs and decimals are still refused. Nothing else changes.
+- **The CLI takes check-run and job ids of any length.** `--exclude-check-run` and
+  `--exclude-gitlab-job` accepted at most ten digits, but GitHub check-run ids and GitLab job ids are
+  already longer (12 and 11 digits), so excluding the checker's own run was refused with a usage
+  error. They now take any positive integer up to 9007199254740991, the largest a record holds
+  exactly; a larger value is refused, never rounded. No verdict changes.
 
 ## Changes in 0.1.18
 
@@ -146,10 +164,7 @@ is sent to Barg Labs.
 
 ## Changes in 0.1.13
 
-The GitHub Action is renamed Dunstan Handback Check, with a shorter description, for the GitHub
-Marketplace. The draft advisory now identifies a test by its (classname, name) pair and reports two
-entries with one identity as `duplicate_record_item`. Advisories never change the verdict; inputs,
-outputs, the check run, the MCP tools and spec 0.1.8 are unchanged.
+The GitHub Action is renamed "Dunstan Handback Check" with a shorter description, so it can be listed on the GitHub Marketplace. No change to inputs, outputs, the check run or verdicts.
 
 ## Changes in 0.1.12
 
