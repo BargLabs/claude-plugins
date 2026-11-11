@@ -1,0 +1,10 @@
+{
+  "dunstan": {
+    "repository": "BargLabs/dunstan",
+    "path": "plugins/dunstan"
+  },
+  "cejel": {
+    "repository": "BargLabs/cejel",
+    "path": "plugins/cejel"
+  }
+}
