@@ -26,16 +26,23 @@ In Claude Code:
 /plugin install dunstan@barglabs
 ```
 
-The MCP server runs locally with `npx -y dunstan@0.1.18 mcp`, so Node.js 22 or later must be on your path.
+The MCP server runs locally with `npx -y dunstan@0.1.19 mcp`, so Node.js 22 or later must be on your path.
 
 ## What it runs, reads and sends
 
-The plugin starts the MCP server with `npx -y dunstan@0.1.18 mcp`, which downloads the `dunstan`
+The plugin starts the MCP server with `npx -y dunstan@0.1.19 mcp`, which downloads the `dunstan`
 package at that exact version from the npm registry. The package is one self-contained file with no
 dependencies. The server runs on your machine and reads GitHub's API directly from it: the pull
 request, its files, commits, check runs, workflow runs and artifacts, deployments, and the issues the
 block references. Every request is a read. Nothing is written to GitHub or the repository, and nothing
 is sent to Barg Labs.
+
+## Changes in 0.1.19
+
+- **Ids up to 16 digits.** `--pr`, `--mr`, `--exclude-check-run` and `--exclude-gitlab-job` accept
+  any positive integer up to 9007199254740991 (JavaScript's largest safe integer). 0.1.18 refused
+  anything over ten digits, so a GitLab job id (eleven digits today) could not be excluded and the
+  GitLab CI component failed its own job. Leading zeros, signs and decimals are still refused. Nothing else changes.
 
 ## Changes in 0.1.18
 
