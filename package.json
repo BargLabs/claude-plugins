@@ -1,0 +1,8 @@
+{
+  "name": "barglabs-claude-plugins",
+  "private": true,
+  "description": "The barglabs Claude Code plugin marketplace. No dependencies: the scripts use Node built-ins only.",
+  "scripts": {
+    "preflight": "bash scripts/preflight_fast.sh"
+  }
+}
