@@ -17,7 +17,7 @@ In Claude Code:
 /plugin install cejel@barglabs
 ```
 
-The MCP server runs locally with `npx -y @cejel/cejel@0.6.8 mcp`, so Node.js 18 or later must be on your path.
+The MCP server runs locally with `npx -y @cejel/cejel@0.6.11 mcp`, so Node.js 18 or later must be on your path.
 
 ## What the plugin contains
 
@@ -49,6 +49,23 @@ The MCP server runs locally with `npx -y @cejel/cejel@0.6.8 mcp`, so Node.js 18 
   criteria they come from."
 - "Run Cejel on https://github.com/BargLabs/cejel and save its trust badge to
   ./cejel-badge.svg."
+
+## Changes since 0.6.8
+
+0.6.9 to 0.6.11, in brief (full notes in the
+[Cejel changelog](https://github.com/BargLabs/cejel/blob/main/CHANGELOG.md)). v17 stays the default
+rubric throughout.
+
+- **0.6.11:** `cejel issue` reproduces a certificate with the attested scan's own date; the GitHub
+  Action no longer reads the calling repository's `package.json` to set up pnpm; Cejel is a GitLab
+  CI/CD Catalog component, and a score change on the same line keeps its GitLab Code Quality
+  fingerprint.
+- **0.6.10:** a plain-language first page on the certificate; under the default rubric, a scan whose
+  git history Cejel could not read gives no score and no verdict.
+- **0.6.9:** history scanning of large repositories is time-bounded and keeps its evidence (#586,
+  #567); the GitHub Action gains an optional `rubric-pin` input.
+
+The MCP server's tool is unchanged (`scan`).
 
 ## Changes since 0.6.3
 

@@ -1,6 +1,6 @@
 ---
 name: dunstan-check
-description: Before saying a pull request is done, declare the handback in a dunstan-handback block, list undeclared prose claims with dunstan_suggest_declarations, check the block against the pull request's GitHub record with dunstan_check_handback, and report the verdict exactly as returned.
+description: Before saying a pull request is done, generate the dunstan-handback block with dunstan_template_handback (test counts read from CI), list undeclared prose claims with dunstan_suggest_declarations, check the block against the pull request's GitHub record with dunstan_check_handback, and report the verdict exactly as returned.
 ---
 
 # Check the handback before you say done
@@ -15,10 +15,23 @@ the block must say what you actually did.
 ## Steps
 
 1. **Push your last commit.** The check reads the pull request as GitHub has it.
-2. **Write the `dunstan-handback` block** in your report, inside a fenced block with the info string
-   `dunstan-handback`, in the exact shape below. To fill `headCommit` and `filesChanged` from local
-   git, you can run `npx -y dunstan@0.1.13 template --base <base branch>`, which reads only the local
-   repository.
+2. **Generate the `dunstan-handback` block** and put it in your report, inside a fenced block with
+   the info string `dunstan-handback`, in the exact shape below. Call `dunstan_template_handback`
+   with `directory`, the absolute path of your checkout of the pull request's branch, and `base`,
+   the branch it merges into. It fills `headCommit` and `filesChanged` from local git and returns the
+   fence to paste. From a shell, `npx -y dunstan@0.1.18 template --base <base branch>` does the same.
+
+   **Test counts come from CI, not from your own run.** After CI has finished on your last push, add
+   `tests: { "from": "ci", "command": <the test command>, "workflow": <workflow file>, "job": <job
+   name> }` to the call (from a shell: `--tests-ci --tests-command <the test command>
+   --tests-workflow <workflow file> --tests-job <job name>`). It reads the counts from the JUnit
+   record CI published, as the check will, and declares them. If the tool's first line is `tests:
+   not declared` (or the command declares no tests), its note says why (CI not finished, no record
+   published, no token) and what to do; do not fill the counts in yourself. If only a local run
+   exists, declare it with `tests: { "from": "local", "junit": <your JUnit file>, "command": <the
+   test command> }` (from a shell: `--tests-local <your JUnit file> --tests-command <the test
+   command>`), and say in your report that CI publishes no test record. Never state a test count in
+   prose that the block does not declare.
 
 ## The block
 
@@ -44,7 +57,7 @@ outside this list is allowed. Declare only what you claim.
         "kind": "junit",
         "workflow": ".github/workflows/ci.yml",
         "job": "test",
-        "artifact": "junit",
+        "artifact": "dunstan-junit",
         "path": "junit.xml"
       }
     }
@@ -62,6 +75,8 @@ outside this list is allowed. Declare only what you claim.
   `"closes"` or `"cites"`. A commit can only be cited.
 - `tests`: a count is checked only against the JUnit file a workflow run uploaded, named in `record`.
   A count with no record to compare is `unverifiable`, so declare a test claim only with its record.
+  A run that left no record in CI is declared as one, with `"record": { "kind": "local" }`: it is
+  `unverifiable` (`local_run_not_in_record`), which is the honest answer, not a failure.
 - `checks` (`total`, `allSucceeded`, `noneFailed`): `allSucceeded` is `true` only if every check run
   counted at the head concluded `success`, so a skipped or neutral run makes it `false`;
   `noneFailed` is `true` if none concluded anything other than `success`, `skipped` or `neutral`
@@ -94,6 +109,11 @@ The full specification: https://github.com/BargLabs/dunstan/blob/main/spec/claim
     Tell the user the issue is still open and why.
   - `closing_event_unsettled`: the issue is closed, but GitHub has not yet recorded what closed it.
     Checking again later can settle it.
+- A `tests` row that is `unverifiable` with `record_not_found`, `no_comparable_record_field`,
+  `local_run_not_in_record`, `record_producer_changed_by_pr` or `source_unreadable:artifact` is
+  followed by a `remedy:` line. Pass it on as it is: it says what the repository or you can do so
+  the count can be checked. `record_producer_changed_by_pr` means the pull request changes the
+  workflow that wrote the test record, so the record cannot vouch for the change.
 - The tool does not read the prose, so it returns no advisory notes. If you are shown a Dunstan record
   with advisory notes (from `dunstan check --advisory`), describe each `differs` note as "possible
   disagreement, unverified". An advisory note is never a verdict and never proof of a false claim.
@@ -105,5 +125,6 @@ The full specification: https://github.com/BargLabs/dunstan/blob/main/spec/claim
 - Never edit the block to make the check pass without changing the work. A block that declares less,
   or declares what you hoped rather than what you did, is a false report.
 
-In Claude Code the tools are named `mcp__plugin_dunstan_dunstan__dunstan_suggest_declarations` and
+In Claude Code the tools are named `mcp__plugin_dunstan_dunstan__dunstan_template_handback`,
+`mcp__plugin_dunstan_dunstan__dunstan_suggest_declarations` and
 `mcp__plugin_dunstan_dunstan__dunstan_check_handback`.
