@@ -3,6 +3,8 @@
   "private": true,
   "description": "The barglabs Claude Code plugin marketplace. No dependencies: the scripts use Node built-ins only.",
   "scripts": {
-    "preflight": "bash scripts/preflight_fast.sh"
+    "preflight": "bash scripts/preflight_fast.sh",
+    "test": "node --test \"scripts/**/*.test.mjs\"",
+    "check": "node scripts/check-plugin-sources.mjs"
   }
 }
