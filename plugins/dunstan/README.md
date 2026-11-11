@@ -26,16 +26,99 @@ In Claude Code:
 /plugin install dunstan@barglabs
 ```
 
-The MCP server runs locally with `npx -y dunstan@0.1.13 mcp`, so Node.js 22 or later must be on your path.
+The MCP server runs locally with `npx -y dunstan@0.1.18 mcp`, so Node.js 22 or later must be on your path.
 
 ## What it runs, reads and sends
 
-The plugin starts the MCP server with `npx -y dunstan@0.1.13 mcp`, which downloads the `dunstan`
+The plugin starts the MCP server with `npx -y dunstan@0.1.18 mcp`, which downloads the `dunstan`
 package at that exact version from the npm registry. The package is one self-contained file with no
 dependencies. The server runs on your machine and reads GitHub's API directly from it: the pull
 request, its files, commits, check runs, workflow runs and artifacts, deployments, and the issues the
 block references. Every request is a read. Nothing is written to GitHub or the repository, and nothing
 is sent to Barg Labs.
+
+## Changes in 0.1.18
+
+- **A cited commit only has to exist (spec 0.1.11).** A `cites` reference to a commit now passes
+  when the commit exists in the repository, whether or not the pull request's head reaches it. A
+  commit that landed on the base branch after the branch was made, or one on another branch, is a
+  true citation, and 0.1.17 failed it with `not_reachable`. Whether the head reaches the commit is
+  still read and recorded; it decides nothing. A commit that does not exist still fails with
+  `not_found`. Every other verdict is unchanged, and no request is added.
+
+## Changes in 0.1.17
+
+- **GitLab merge requests (DRAFT GitLab profile 0.1).** `dunstan check --gitlab-project
+  <namespace/project> --mr <iid>` checks a merge request on gitlab.com, or on `--gitlab-host`. A
+  public project needs no token; for a private one, `GITLAB_TOKEN` is read from the environment and
+  sent only as a request header, never written to a record. It reads the same evidence as for
+  GitHub: the merge request, its changed files, closing and cited references, close events, the head
+  pipeline's latest jobs and bridges as check runs, a JUnit file from a job's artifacts, and
+  deployments. A GitLab record names its forge and host in a DRAFT schema of its own, so every
+  GitHub record is unchanged. The profile is a DRAFT and its mapping may change before it is made
+  normative. The Action, the MCP tools, the survey and the hosted tier still read GitHub only.
+
+- **A test record the pull request wrote is no evidence (spec 0.1.10).** On `pull_request`,
+  GitHub runs the workflow file as the pull request has it, so a pull request that changes the
+  workflow its `junit` record names can make its own CI publish any count. Its `tests` rows are now
+  `unverifiable` with the new reason `record_producer_changed_by_pr`, whatever the counts, where
+  0.1.16 compared them; the `remedy:` line says to land the workflow change separately. Where the
+  changed-file list is incomplete or unreadable, a `junit` tests row now takes that list's reason
+  (`file_list_truncated`, `source_unreadable:pull_request_files`), since the list cannot show the
+  workflow unchanged. The rule reads only the workflow file's own path: a change to the reporter's
+  configuration, an action or workflow it calls, a script it runs, or the tests themselves is not
+  caught. Every other verdict is unchanged, and no request is added.
+
+## Changes in 0.1.16
+
+- **`dunstan_template_handback`, a third MCP tool.** It is `dunstan template` for an agent with no
+  shell. Give it the absolute path of the checkout (`directory`) and the base branch (`base`). With
+  `tests.from: "ci"`, once CI has finished on the last push, it declares the test counts from the
+  JUnit record CI published, read as the check reads them. When those counts do not settle, it
+  returns the block without tests and says why, and the skill tells Claude never to fill them in by
+  hand. `tests.from: "local"` declares a local run. The block is byte for byte what the CLI prints:
+  [`docs/mcp.md`](../../docs/mcp.md).
+
+## Changes in 0.1.15
+
+- **`dunstan survey` (DRAFT) reads the listing again when it moved.** A page of the listing that
+  repeats a pull request it already listed shows the listing moved during the read. The survey now
+  reads it again from the first page, up to 3 reads, so a pull request that closed during the read
+  is listed rather than missed (when all 3 reads moved, the last can still miss one, and the summary
+  says so). The record keeps each abandoned read's pages, and `dunstan verify` checks the rule:
+  [`docs/survey.md`](../../docs/survey.md).
+
+## Changes in 0.1.14
+
+- **Test claims a reader can check (spec 0.1.9). Counts from CI.** `dunstan template --tests-ci
+  --tests-command <cmd> --tests-workflow <path> --tests-job <name>` reads the test counts at HEAD
+  from the JUnit record CI published, with the reader the check uses, and declares them. When no
+  single count settles (CI not finished, no record, no token, HEAD not pushed), it declares no
+  tests, says why, and exits 2. The skill now tells Claude to declare counts this way, after CI has
+  finished on its last push.
+- **A local run, declared as one.** A test record `{"kind": "local"}` (`--tests-local <file>`)
+  declares counts from a run that left no record in CI. Its rows are `unverifiable` with the new
+  reason `local_run_not_in_record`. A `local` record with any other member is now an invalid block.
+- **Remedy lines.** Each `tests` row that is `unverifiable` with `record_not_found`,
+  `no_comparable_record_field`, `local_run_not_in_record` or `source_unreadable:artifact` is
+  followed by a `remedy:` line in the tool's text, the CLI and the Action's summary. Records are
+  unchanged.
+- **`dunstan junit-merge`** joins the JUnit files Maven Surefire and Gradle write, one per test
+  class, into the one file a record names. CI recipes for pytest, jest, vitest, Maven, Gradle and
+  Go: [`docs/ci-test-records.md`](../../docs/ci-test-records.md).
+- **Tests claims need a token**, as `closes` does: GitHub answers an artifact download only with
+  one, even on a public repository, so without a token a test count is `unverifiable`
+  (`source_unreadable:artifact`). The documentation said otherwise before.
+- **`dunstan survey` (DRAFT)**, a read-only report over a repository's recent closed pull requests
+  of which claims the record could settle and why the rest could not. It records whether it read
+  with a token and lists each pull request once, and its record verifies offline for consistency,
+  not completeness: [`docs/survey.md`](../../docs/survey.md).
+- **Marketplace listing.** The Action's description uses the words people search for, and the
+  repository README opens with the Dunstan logo, one sentence on what Dunstan checks and a complete
+  `pull_request` workflow. No behaviour change.
+- **Study 3 withdrawn.** [`WITHDRAWAL.md`](../../experiments/open-source-advisory-2026-11-study3/WITHDRAWAL.md)
+  records that the operator withdrew study 3 on 19 October 2026, before any search ran. Its
+  preregistration is unchanged.
 
 ## Changes in 0.1.13
 
